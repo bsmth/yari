@@ -440,7 +440,7 @@ code {
 pre {
   background-color: var(--code-background-block);
   border: 1px solid transparent;
-  margin: 1rem 0 2rem;
+  margin: 0;
   padding: 1rem 2.5rem 1rem 1rem;
 
   code {
@@ -540,14 +540,15 @@ pre {
 }
 
 .code-example {
+  border: 1px solid var(--border-primary);
   color: var(--code-default);
-  margin-bottom: 2rem;
+  margin: 1rem 0 2rem;
   position: relative;
 
   .example-header {
     align-items: center;
     background-color: var(--background-secondary);
-    border: 1px solid var(--border-primary);
+    border-bottom: 1px solid var(--border-primary);
     border-top-left-radius: var(--elem-radius);
     border-top-right-radius: var(--elem-radius);
     display: flex;

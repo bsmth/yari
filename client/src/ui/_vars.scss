@@ -1,5 +1,6 @@
 @use "./color-palette" as *;
 
+$mdn-color-neutral-light-60: #fafafa;
 $mdn-color-neutral-light-70: #f9f9fb;
 $mdn-color-neutral-light-80: #f2f1f1;
 $mdn-color-neutral-light-90: #ebeaea;
@@ -13,6 +14,7 @@ $mdn-color-neutral-60: #696969;
 $mdn-color-neutral-70: #4e4e4e;
 $mdn-color-neutral-80: #343434;
 $mdn-color-neutral-90: #1b1b1b;
+$mdn-color-neutral-100: #000;
 
 $mdn-color-light-theme-blue: #0085f2;
 $mdn-color-light-theme-green: #009a46;
@@ -192,11 +194,11 @@ $mdn-theme-light-code-token-tag: $mdn-color-light-theme-blue-60;
 $mdn-theme-light-code-token-punctuation: $mdn-color-neutral-50;
 $mdn-theme-light-code-token-attribute-name: $mdn-color-light-theme-red-60;
 $mdn-theme-light-code-token-attribute-value: $mdn-color-light-theme-green-60;
-$mdn-theme-light-code-token-comment: $mdn-color-neutral-50;
-$mdn-theme-light-code-token-default: $mdn-color-neutral-90;
+$mdn-theme-light-code-token-comment: $mdn-color-neutral-60;
+$mdn-theme-light-code-token-default: $mdn-color-neutral-100;
 $mdn-theme-light-code-token-selector: $mdn-color-light-theme-violet-60;
-$mdn-theme-light-code-background-inline: $mdn-color-neutral-light-80;
-$mdn-theme-light-code-background-block: $mdn-color-neutral-light-80;
+$mdn-theme-light-code-background-inline: $mdn-color-neutral-light-60;
+$mdn-theme-light-code-background-block: $mdn-color-neutral-light-60;
 
 $mdn-theme-dark-text-primary: $mdn-color-white;
 $mdn-theme-dark-text-secondary: $mdn-color-neutral-20;
