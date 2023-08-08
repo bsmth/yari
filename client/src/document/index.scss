@@ -320,7 +320,6 @@ table {
 }
 
 iframe {
-  border: 1px solid var(--border-primary);
   max-width: 100%;
   width: 100%;
 
@@ -540,7 +539,6 @@ pre {
 }
 
 .code-example {
-  border: 1px solid var(--border-primary);
   color: var(--code-default);
   margin: 1rem 0 2rem;
   position: relative;
@@ -548,7 +546,7 @@ pre {
   .example-header {
     align-items: center;
     background-color: var(--background-secondary);
-    border-bottom: 1px solid var(--border-primary);
+    border: 1px solid var(--border-primary);
     border-top-left-radius: var(--elem-radius);
     border-top-right-radius: var(--elem-radius);
     display: flex;
@@ -559,6 +557,7 @@ pre {
 
     ~ pre,
     ~ iframe {
+      border: 1px solid var(--border-primary);
       border-top: none;
       border-top-left-radius: 0;
       border-top-right-radius: 0;
