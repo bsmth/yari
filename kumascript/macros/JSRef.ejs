@@ -66,7 +66,7 @@ if (groupData.TypedArray.includes(mainObj)) {
 } else if (groupData.Error.includes(mainObj)) {
   mainObj = "Error";
 } else if (groupData.Proxy.includes(mainObj)) {
-  mainObj = "Proxy/handler";
+  mainObj = "Proxy/Proxy";
 } else if (mainObj.startsWith("Intl") && !groupData.Intl.includes(mainObj)) {
   // Special case for Intl, we should make sure that the main object is Intl
   // as Intl owns some methods (e.g. Intl.getCanonicalLocales)
