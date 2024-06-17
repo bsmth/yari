@@ -1,0 +1,55 @@
+<%
+// Creates a list of Glossary pages sorted alphabetically.
+// Usage: {{GlossaryListAlpha()}}
+// Parameters: none
+
+let pages = await page.subpagesExpand("/en-US/docs/Glossary");
+// `subpagesExpand()` is not guaranteed to be alphabetical, so alpha sort
+//  it first, because the rendering loop below depends on it.
+pages.sort((a, b) =>
+    a.title.toLowerCase().localeCompare(b.title.toLowerCase()),
+);
+
+const locale = env.locale;
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+let html = "";
+
+let pageIndex = 0;
+
+for (let i = 0; i < letters.length; i++) {
+    let currentLetter = letters[i];
+    let insertedHeading = false;
+
+    if (pageIndex < pages.length) {
+        do {
+            const currentPage = pages[pageIndex];
+            const url = currentPage.url;
+            const title = currentPage.title;
+
+            if (title == null) {
+                pageIndex++;
+                continue;
+            }
+
+            if (title[0].toUpperCase() == currentLetter) {
+                if (!insertedHeading) {
+                    html += "<h3>" + currentLetter + "</h3><ul>";
+                    insertedHeading = true;
+                }
+
+                html += `\n<li><span class="indexListRow"><span class="indexListTerm"><a href="${url.replace("en-US", locale)}">${title}</a></li>`;
+
+                pageIndex++;
+            } else {
+                break;
+            }
+        } while (pageIndex < pages.length);
+    }
+    // close the ul
+    html += "\n</ul>\n";
+}
+%>
+
+<div class="index">
+  <%-html%>
+</div>
