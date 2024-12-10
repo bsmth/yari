@@ -24,6 +24,18 @@
     padding: 0 1rem;
     width: 100%;
 
+    .document-survey {
+      margin-top: 1rem;
+
+      &:not(:has(details[open])) {
+        max-width: 32rem;
+      }
+
+      ~ h1 {
+        display: none;
+      }
+    }
+
     h1 {
       /* Title */
       font-size: 2.2rem;
@@ -57,30 +69,6 @@
     p {
       text-shadow: var(--contrast-boost-shadow);
     }
-
-    p > span {
-      font-size: 1.5rem;
-      position: relative;
-
-      &:after {
-        background: linear-gradient(
-          90deg,
-          var(--pride-0) 0%,
-          var(--pride-1) 20%,
-          var(--pride-2) 40%,
-          var(--pride-3) 60%,
-          var(--pride-4) 80%,
-          var(--pride-5) 100%
-        );
-        bottom: -0.1rem;
-        box-shadow: var(--contrast-boost-shadow);
-        content: "";
-        height: 0.15rem;
-        left: 0;
-        position: absolute;
-        right: 0;
-      }
-    }
   }
 
   .homepage-hero-bg {
@@ -111,6 +99,7 @@
 
     .search-input-field {
       background-color: rgba(1, 1, 1, 0.5);
+      border-color: var(--border-primary);
       border-radius: 10rem;
       padding: 2rem;
       width: 100%;

@@ -2,16 +2,37 @@
 import he from "he";
 import anonymousIpByCC from "./cc2ip.js";
 
+function fixupColor(hash) {
+  if (typeof hash !== "string" && typeof hash !== "number") {
+    return undefined;
+  } else if (hash?.startsWith?.("rgb") || hash?.startsWith?.("#")) {
+    return hash;
+  } else {
+    return `#${hash}`;
+  }
+}
+
 export function createPong2GetHandler(zoneKeys, coder) {
   return async (body, countryCode, userAgent) => {
-    const { pongs = null } = body;
+    let { pongs = null } = body;
+
+    // Validate.
+    if (!Array.isArray(pongs)) {
+      return { statusCode: 400, payload: { status: "invalid" } };
+    }
+
+    // Sanitize.
+    pongs = pongs.filter((p) => p in zoneKeys);
+
+    if (pongs.length == 0) {
+      return { statusCode: 400, payload: { status: "empty" } };
+    }
+
     const anonymousIp = anonymousIpByCC(countryCode);
 
-    const placements = pongs
-      .filter((p) => p in zoneKeys)
-      .map((p) => {
-        return { name: p, zoneKey: [zoneKeys[p]] };
-      });
+    const placements = pongs.map((p) => {
+      return { name: p, zoneKey: [zoneKeys[p]] };
+    });
 
     const requests = placements.map(async ({ name, zoneKey }) => {
       const res = await (
@@ -21,6 +42,7 @@ export function createPong2GetHandler(zoneKeys, coder) {
           )}${userAgent ? `&useragent=${encodeURIComponent(userAgent)}` : ""}`
         )
       ).json();
+
       const {
         ads: [
           {
@@ -28,6 +50,7 @@ export function createPong2GetHandler(zoneKeys, coder) {
             statimp,
             Description,
             Image,
+            LargeImage,
             ImageTitle,
             BackgroundColor,
             BackgroundColorLight,
@@ -40,6 +63,7 @@ export function createPong2GetHandler(zoneKeys, coder) {
             TextColor,
             TextColorLight,
             TextColorDark,
+            Heading,
           },
         ] = [],
       } = res;
@@ -51,19 +75,22 @@ export function createPong2GetHandler(zoneKeys, coder) {
             : {
                 click: coder.encodeAndSign(statlink),
                 view: coder.encodeAndSign(statimp),
-                image: coder.encodeAndSign(Image),
+                image: coder.encodeAndSign(LargeImage || Image),
                 alt: ImageTitle && he.decode(ImageTitle),
                 copy: Description && he.decode(Description),
                 cta: CallToAction && he.decode(CallToAction),
+                heading: Heading && he.decode(Heading),
                 colors: {
-                  textColor: TextColor || TextColorLight,
-                  backgroundColor: BackgroundColor || BackgroundColorLight,
-                  ctaTextColor: CtaTextColorLight,
-                  ctaBackgroundColor: CtaBackgroundColorLight,
-                  textColorDark: TextColorDark,
-                  backgroundColorDark: BackgroundColorDark,
-                  ctaTextColorDark: CtaTextColorDark,
-                  ctaBackgroundColorDark: CtaBackgroundColorDark,
+                  textColor: fixupColor(TextColor || TextColorLight),
+                  backgroundColor: fixupColor(
+                    BackgroundColor || BackgroundColorLight
+                  ),
+                  ctaTextColor: fixupColor(CtaTextColorLight),
+                  ctaBackgroundColor: fixupColor(CtaBackgroundColorLight),
+                  textColorDark: fixupColor(TextColorDark),
+                  backgroundColorDark: fixupColor(BackgroundColorDark),
+                  ctaTextColorDark: fixupColor(CtaTextColorDark),
+                  ctaBackgroundColorDark: fixupColor(CtaBackgroundColorDark),
                 },
               },
       };
@@ -91,7 +118,7 @@ export function createPong2GetHandler(zoneKeys, coder) {
           if (v === null) {
             return null;
           }
-          const { copy, image, alt, click, view, cta, colors = {} } = v;
+          const { copy, image, alt, click, view, cta, colors, heading } = v;
           return [
             p,
             {
@@ -103,6 +130,7 @@ export function createPong2GetHandler(zoneKeys, coder) {
               colors,
               click,
               view,
+              heading,
               version: 2,
             },
           ];

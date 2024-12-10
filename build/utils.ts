@@ -148,40 +148,6 @@ export function getImageminPlugin(fileName: string) {
   throw new Error(`No imagemin plugin for ${extension}`);
 }
 
-export function splitSections(rawHTML) {
-  const $ = cheerio.load(`<div id="_body">${rawHTML}</div>`);
-  const blocks = [];
-  const toc = [];
-
-  const section = cheerio
-    .load("<div></div>", { decodeEntities: false })("div")
-    .eq(0);
-
-  const iterable = [...($("#_body")[0] as cheerio.Element).childNodes];
-  let c = 0;
-  iterable.forEach((child) => {
-    if ("tagName" in child && child.tagName === "h2") {
-      if (c) {
-        blocks.push(section.clone());
-        section.empty();
-        c = 0;
-      }
-      const text = $(child).text();
-      const id = text.replace(/[ .,!?]+/g, "-").toLowerCase();
-      toc.push({ id, text });
-      child.attribs = { ...(child.attribs || {}), id };
-    }
-    c++;
-    section.append(child);
-  });
-  if (c) {
-    blocks.push(section.clone());
-  }
-
-  const sections = blocks.map((block) => block.html().trim());
-  return { sections, toc };
-}
-
 /**
  * Return an array of all images that are inside the documents source folder.
  *
@@ -230,6 +196,10 @@ export function postProcessExternalLinks($) {
       // But we haven't applied all fixable flaws yet and we still have to
       // support translated content which is quite a long time away from
       // being entirely treated with the fixable flaws cleanup.
+      $a.attr(
+        "href",
+        $a.attr("href").replace("https://developer.mozilla.org", "") || "/"
+      );
       return;
     }
     $a.addClass("external");
@@ -384,4 +354,16 @@ export async function importJSON<T>(jsonPath: string): Promise<T> {
   const json = await readFile(jsonPath, "utf-8");
 
   return JSON.parse(json);
+}
+
+export function* chunks<T>(array: T[], size: number): Generator<T[]> {
+  for (let i = 0; i < array.length; i += size) {
+    yield array.slice(i, i + size);
+  }
+}
+
+export function formatDuration(seconds: number) {
+  return seconds > 60
+    ? `${(seconds / 60).toFixed(1)} minutes`
+    : `${seconds.toFixed(1)} seconds`;
 }

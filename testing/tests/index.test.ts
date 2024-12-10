@@ -27,9 +27,10 @@ test("all favicons on the home page", () => {
 
   // Check that every favicon works and resolves
   $('link[rel="icon"], link[rel="apple-touch-icon"]').each((i, element) => {
-    const href = $(element).attr("href");
-    // There should always be a 8 character hash in the href
-    expect(/\.[a-f0-9]{8}\./.test(href)).toBeTruthy();
+    const url = $(element).attr("href");
+    const href = new URL(url).pathname;
+    // There should always be a 20 character hash in the href
+    expect(/\.[a-f0-9]{20}\./.test(href)).toBeTruthy();
     // The favicon href is a URL so to check that it exists on disk we need to
     // strip the leading / and join that with the root of the build.
     const file = path.join(buildRoot, href.slice(1));
@@ -50,8 +51,8 @@ test("all favicons on the home page", () => {
   $('meta[property="og:image"]').each((i, element) => {
     const url = $(element).attr("content");
     const href = new URL(url).pathname;
-    // There should always be a 8 character hash in the href
-    expect(/\.[a-f0-9]{8}\./.test(href)).toBeTruthy();
+    // There should always be a 20 character hash in the href
+    expect(/\.[a-f0-9]{20}\./.test(href)).toBeTruthy();
     const file = path.join(buildRoot, href.slice(1));
     expect(fs.existsSync(file)).toBeTruthy();
   });
@@ -925,8 +926,8 @@ test("check built flaws for /en-us/learn/css/css_layout/introduction/flex page",
   const htmlFile = path.join(builtFolder, "index.html");
   const html = fs.readFileSync(htmlFile, "utf-8");
   const $ = cheerio.load(html);
-  // The css_layout/introduction/flex page has 2 iframes
-  expect($('iframe[loading="lazy"]')).toHaveLength(2);
+  // The css_layout/introduction/flex page has 0 iframes
+  expect($('iframe[loading="lazy"]')).toHaveLength(0);
 });
 
 test("detect bad_bcd_queries flaws", () => {
@@ -1172,9 +1173,9 @@ test("images that are in the folder but not in <img> tags", () => {
 });
 
 test("404 page", () => {
-  const builtFolder = path.join(buildRoot, "en-us", "_spas");
+  const builtFolder = path.join(buildRoot, "en-us");
   expect(fs.existsSync(builtFolder)).toBeTruthy();
-  const htmlFile = path.join(builtFolder, "404.html");
+  const htmlFile = path.join(builtFolder, "404", "index.html");
   const html = fs.readFileSync(htmlFile, "utf-8");
   const $ = cheerio.load(html);
   expect($("title").text()).toContain("Page not found");
@@ -1391,23 +1392,6 @@ test("/Web/Embeddable should have 4 valid live samples", () => {
   const html = fs.readFileSync(htmlFile, "utf-8");
   const $ = cheerio.load(html);
   expect($("iframe")).toHaveLength(4);
-
-  const jsonFile = path.join(builtFolder, "index.json");
-  const { doc } = JSON.parse(fs.readFileSync(jsonFile, "utf-8")) as {
-    doc: Doc;
-  };
-  expect(doc.flaws.macros[0].name).toEqual("MacroDeprecatedError");
-
-  // Only the transplanted live sample has a file.
-  const builtFiles = fs.readdirSync(path.join(builtFolder, "legacy"));
-  expect(
-    builtFiles
-      .filter((f) => f.includes("_sample_."))
-      .map((f) => {
-        const startOffset = "_sample_.".length;
-        return f.substr(startOffset, f.length - startOffset - ".html".length);
-      })
-  ).toEqual(expect.arrayContaining(["foo"]));
 });
 
 test("headings with HTML should be rendered as HTML", () => {

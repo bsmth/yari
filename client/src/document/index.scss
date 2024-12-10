@@ -14,6 +14,8 @@
   h4,
   h5,
   h6 {
+    font-variant-ligatures: no-contextual;
+
     a:link,
     a:visited {
       color: var(--text-primary);
@@ -110,6 +112,10 @@
 
     li {
       margin: 0.5rem 0;
+
+      > p {
+        margin: 0;
+      }
     }
   }
 
@@ -188,12 +194,6 @@
     dd {
       margin-bottom: 1rem;
       margin-left: 1rem;
-
-      .notecard {
-        p {
-          padding-left: 0;
-        }
-      }
 
       dl {
         /* Nested definition list. */
@@ -450,6 +450,7 @@ code,
   border-radius: var(--elem-radius);
   font-family: var(--font-code);
   font-size: var(--type-smaller-font-size);
+  tab-size: 4;
 }
 
 code {
@@ -469,6 +470,10 @@ pre {
     color: var(--text-primary);
     padding: 0;
   }
+}
+
+math[display="block"] {
+  margin: 1rem 0 2rem;
 }
 
 .example-good,
@@ -813,12 +818,6 @@ pre {
   }
 }
 
-.only-in-en-us {
-  span {
-    font-size: 0.8125rem;
-  }
-}
-
 a.page-not-created {
   cursor: not-allowed;
 
@@ -860,15 +859,15 @@ kbd {
   --offset: var(--sticky-header-with-actions-height);
   --max-height: calc(100vh - var(--offset));
 
-  @media (min-width: $screen-md) and (min-height: $screen-height-place-limit) {
-    display: flex;
-    flex-direction: column;
-  }
-
   max-height: var(--max-height);
   position: sticky;
   top: var(--offset);
   z-index: var(--z-index-sidebar-mobile);
+
+  @media (min-width: $screen-md) and (min-height: $screen-height-place-limit) {
+    display: flex;
+    flex-direction: column;
+  }
 
   @media (min-width: $screen-md) {
     z-index: auto;
@@ -948,7 +947,12 @@ html a.only-in-en-us:after {
   content: "(en-US)";
   display: inline-block;
   font-size: var(--type-tiny-font-size);
+  margin-left: 0.5ch;
   vertical-align: super;
+}
+
+html[lang="de"] a.only-in-en-us:after {
+  content: "(engl.)";
 }
 
 html[lang="es"] a.only-in-en-us:after {
@@ -977,10 +981,12 @@ html[lang="pt-BR"] a.only-in-en-us:after {
 
 html[lang="zh-CN"] a.only-in-en-us:after {
   content: "（英语）";
+  margin-left: unset;
   vertical-align: baseline;
 }
 
 html[lang="zh-TW"] a.only-in-en-us:after {
   content: "（英語）";
+  margin-left: unset;
   vertical-align: baseline;
 }
