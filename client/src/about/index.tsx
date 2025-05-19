@@ -7,7 +7,7 @@ import { WRITER_MODE } from "../env";
 import { Prose } from "../document/ingredients/prose";
 
 import "./index.scss";
-import "./custom-elements";
+import "../lit/about";
 import { useGleanClick } from "../telemetry/glean-context";
 import { ABOUT } from "../telemetry/constants";
 
@@ -137,8 +137,8 @@ function Tabs({ section }: { section: AboutSection }) {
     const hash = document.location.hash.startsWith("#our_team")
       ? "#our_team"
       : document.location.hash.startsWith("#our_partners") ||
-          document.location.hash === "#pab" ||
-          document.location.hash === "#owd"
+          document.location.hash === "#product_advisory_board" ||
+          document.location.hash === "#open_web_docs"
         ? "#our_partners"
         : document.location.hash;
     const tab = section.H3s?.findIndex(({ value }) => `#${value.id}` === hash);

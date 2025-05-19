@@ -63,6 +63,7 @@ export const ACTIVE_LOCALES = new Set([
 export const CSP_SCRIPT_SRC_VALUES = [
   "'report-sample'",
   "'self'",
+  "'wasm-unsafe-eval'",
 
   // GA4.
   "https://www.google-analytics.com/analytics.js",
@@ -155,6 +156,7 @@ export const CSP_DIRECTIVES = {
     "profile.stage.mozaws.net",
     "profile.accounts.firefox.com",
 
+    "developer.mozilla.org",
     "mdn.dev",
     "interactive-examples.mdn.mozilla.net",
     "interactive-examples.mdn.allizom.net",
@@ -195,7 +197,7 @@ export const CSP_VALUE = cspToString(CSP_DIRECTIVES);
 // Always update client/src/setupProxy.js when adding/removing extensions, or it won't work on the dev server!
 export const AUDIO_EXT = ["mp3", "ogg"];
 export const FONT_EXT = ["woff2"];
-export const BINARY_IMAGE_EXT = ["gif", "jpeg", "jpg", "png", "webp"];
+export const BINARY_IMAGE_EXT = ["gif", "jpeg", "jpg", "png", "webp", "avif"];
 export const ANY_IMAGE_EXT = ["svg", ...BINARY_IMAGE_EXT];
 export const VIDEO_EXT = ["mp4", "webm"];
 

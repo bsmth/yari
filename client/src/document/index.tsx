@@ -1,16 +1,14 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import useSWR, { mutate } from "swr";
 
 import { WRITER_MODE, PLACEMENT_ENABLED } from "../env";
-import { useGA } from "../ga-context";
 import { useIsServer, useLocale } from "../hooks";
 
 import { useDocumentURL, useDecorateCodeExamples, useRunSample } from "./hooks";
 import { Doc } from "../../../libs/types/document";
 // Ingredients
 import { Prose } from "./ingredients/prose";
-import { LazyBrowserCompatibilityTable } from "./lazy-bcd-table";
 import { SpecificationSection } from "./ingredients/spec-section";
 
 // Misc
@@ -35,6 +33,7 @@ import "./index.scss";
 // code could come with its own styling rather than it having to be part of the
 // main bundle all the time.
 import "./interactive-examples.scss";
+import "../lit/interactive-example/global.scss";
 import { DocumentSurvey } from "../ui/molecules/document-survey";
 import { useIncrementFrequentlyViewed } from "../plus/collections/frequently-viewed";
 import { useInteractiveExamplesActionHandler as useInteractiveExamplesTelemetry } from "../telemetry/interactive-examples";
@@ -43,9 +42,14 @@ import { BaselineIndicator } from "./baseline-indicator";
 import { PlayQueue } from "../playground/queue";
 import { useGleanClick } from "../telemetry/glean-context";
 import { CLIENT_SIDE_NAVIGATION } from "../telemetry/constants";
+import { Spinner } from "../ui/atoms/spinner";
+import { DisplayH2, DisplayH3 } from "./ingredients/utils";
 // import { useUIStatus } from "../ui-context";
 
 // Lazy sub-components
+const LazyCompatTable = React.lazy(
+  () => import("../lit/compat/lazy-compat-table.js")
+);
 const Toolbar = React.lazy(() => import("./toolbar"));
 const MathMLPolyfillMaybe = React.lazy(() => import("./mathml-polyfill"));
 
@@ -62,7 +66,10 @@ export class HTTPError extends Error {
 }
 
 export function Document(props /* TODO: define a TS interface for this */) {
-  const { gtag } = useGA();
+  React.useEffect(() => {
+    import("../lit/interactive-example/index.js");
+  }, []);
+
   const gleanClick = useGleanClick();
   const isServer = useIsServer();
 
@@ -137,14 +144,6 @@ export function Document(props /* TODO: define a TS interface for this */) {
     if (doc && !error) {
       if (mountCounter.current > 0) {
         const location = window.location.toString();
-        // 'dimension19' means it's a client-side navigation.
-        // I.e. not the initial load but the location has now changed.
-        // Note that in local development, where you use `localhost:3000`
-        // this will always be true because it's always client-side navigation.
-        gtag("event", "pageview", {
-          dimension19: "Yes",
-          page_location: location,
-        });
         gleanClick(`${CLIENT_SIDE_NAVIGATION}: ${location}`);
       }
 
@@ -152,7 +151,7 @@ export function Document(props /* TODO: define a TS interface for this */) {
       // a client-side navigation happened.
       mountCounter.current++;
     }
-  }, [gtag, gleanClick, doc, error]);
+  }, [gleanClick, doc, error]);
 
   React.useEffect(() => {
     const location = document.location;
@@ -266,15 +265,19 @@ export function Document(props /* TODO: define a TS interface for this */) {
 }
 
 export function RenderDocumentBody({ doc }) {
+  const locale = useLocale();
+
   return doc.body.map((section, i) => {
     if (section.type === "prose") {
       return <Prose key={section.value.id} section={section.value} />;
     } else if (section.type === "browser_compatibility") {
+      const { id, title, isH3, query } = section.value;
       return (
-        <LazyBrowserCompatibilityTable
-          key={`browser_compatibility${i}`}
-          {...section.value}
-        />
+        <Suspense fallback={<Spinner />} key={`browser_compatibility${i}`}>
+          {title && !isH3 && <DisplayH2 id={id} title={title} />}
+          {title && isH3 && <DisplayH3 id={id} title={title} />}
+          <LazyCompatTable query={query} locale={locale} />
+        </Suspense>
       );
     } else if (section.type === "specifications") {
       return (

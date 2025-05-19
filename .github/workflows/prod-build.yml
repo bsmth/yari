@@ -16,8 +16,7 @@ env:
 
 on:
   schedule:
-    # * is a special character in YAML so you have to quote this string
-    - cron: "0 */24 * * *"
+    - cron: "0 0 * * *"
 
   workflow_dispatch:
     inputs:
@@ -134,6 +133,13 @@ jobs:
           mv mdn/translated-content-de/files/de mdn/translated-content/files/
           rm -rf mdn/translated-content-de
 
+      - name: Clean and commit de
+        if: ${{ ! vars.SKIP_BUILD || ! vars.SKIP_FUNCTION }}
+        working-directory: mdn/translated-content
+        run: |
+          git add files/de
+          git -c user.name='MDN' -c user.email='mdn-dev@mozilla.com' commit -m 'de'
+
       - uses: actions/checkout@v4
         if: ${{ ! vars.SKIP_BUILD }}
         with:
@@ -145,13 +151,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
-          cache: yarn
 
       - name: Install all yarn packages
         if: ${{ ! vars.SKIP_BUILD }}
         run: yarn --frozen-lockfile
         env:
-          # https://github.com/microsoft/vscode-ripgrep#github-api-limit-note
+          # Use a GITHUB_TOKEN to bypass rate limiting for ripgrep and rari.
+          # See https://github.com/microsoft/vscode-ripgrep#github-api-limit-note
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Python
@@ -197,6 +203,12 @@ jobs:
           CURRICULUM_ROOT: ${{ github.workspace }}/mdn/curriculum
           GENERIC_CONTENT_ROOT: ${{ github.workspace }}/mdn/generic-content/files
           BASE_URL: "https://developer.mozilla.org"
+
+          # rari
+          BUILD_OUT_ROOT: "client/build"
+          LIVE_SAMPLES_BASE_URL: https://live.mdnplay.dev
+          INTERACTIVE_EXAMPLES_BASE_URL: https://interactive-examples.mdn.mozilla.net
+          ADDITIONAL_LOCALES_FOR_GENERICS_AND_SPAS: de
 
           # The default for this environment variable is geared for writers
           # (aka. local development). Usually defaults are supposed to be for
@@ -245,14 +257,10 @@ jobs:
           REACT_APP_MDN_PLUS_10Y_PLAN: price_1KeG02JNcmPzuWtRlrSiLTI6
 
           # Surveys.
-          REACT_APP_SURVEY_START_HOMEPAGE_FEEDBACK_2024: 1731369600000 # new Date("2024-11-12Z").getTime()
-          REACT_APP_SURVEY_END_HOMEPAGE_FEEDBACK_2024: 1733616000000 # new Date("2024-12-08Z").getTime()
-          REACT_APP_SURVEY_RATE_FROM_HOMEPAGE_FEEDBACK_2024: 0.0
-          REACT_APP_SURVEY_RATE_TILL_HOMEPAGE_FEEDBACK_2024: 1 # 100%
-          REACT_APP_SURVEY_START_WEBDX_EDITING_2024: 1731628800000 # new Date("2024-11-15Z").getTime()
-          REACT_APP_SURVEY_END_WEBDX_EDITING_2024: 1732320000000 # new Date("2024-11-23Z").getTime()
-          REACT_APP_SURVEY_RATE_FROM_WEBDX_EDITING_2024: 0.0
-          REACT_APP_SURVEY_RATE_TILL_WEBDX_EDITING_2024: 0.1 # 10%
+          REACT_APP_SURVEY_START_JS_PROPOSALS_2025: 1743120000000 # new Date("2025-03-28Z").getTime()
+          REACT_APP_SURVEY_END_JS_PROPOSALS_2025: 1744502400000 # new Date("2025-04-13Z").getTime()
+          REACT_APP_SURVEY_RATE_FROM_JS_PROPOSALS_2025: 0.0
+          REACT_APP_SURVEY_RATE_TILL_JS_PROPOSALS_2025: 0.05 # 5%
 
           # Telemetry.
           REACT_APP_GLEAN_CHANNEL: prod
@@ -285,39 +293,25 @@ jobs:
           echo "CONTENT_ROOT=$CONTENT_ROOT"
           echo "CONTENT_TRANSLATED_ROOT=$CONTENT_TRANSLATED_ROOT"
           yarn build:sw
-          yarn build:prepare
+          yarn build:client
+          yarn build:ssr
 
-          yarn tool sync-translated-content es fr ja ko pt-br ru zh-cn zh-tw
+          cp assets/prod/robots.txt client/build/robots.txt
 
-          # Build using one process per locale.
-          # Note: We have 4 cores, but 9 processes is a reasonable number.
-          for locale in en-us de es fr ja ko pt-br ru zh-cn zh-tw; do
-            yarn build:docs --locale $locale 2>&1 | sed "s/^/[$locale] /"   &
-            pids+=($!)
-          done
+          yarn rari content sync-translated-content
+          yarn rari git-history
 
-          for pid in "${pids[@]}"; do
-            wait $pid
-          done
+          yarn rari build --all --issues client/build/issues.json --templ-stats
 
           du -sh client/build
-
-          # Build the blog
-          yarn build:blog
-
-          # Build the curriculum
-          yarn build:curriculum
-
-          # Generate sitemap index file
-          yarn build --sitemap-index
 
           # SSR all pages
           yarn render:html
 
           # Generate whatsdeployed files.
-          yarn tool whatsdeployed --output client/build/_whatsdeployed/code.json
-          yarn tool whatsdeployed $CONTENT_ROOT --output client/build/_whatsdeployed/content.json
-          yarn tool whatsdeployed $CONTENT_TRANSLATED_ROOT --output client/build/_whatsdeployed/translated-content.json
+          yarn tool:legacy whatsdeployed --output client/build/_whatsdeployed/code.json
+          yarn tool:legacy whatsdeployed $CONTENT_ROOT --output client/build/_whatsdeployed/content.json
+          yarn tool:legacy whatsdeployed $CONTENT_TRANSLATED_ROOT --output client/build/_whatsdeployed/translated-content.json
 
           # Sort DE search index by en-US popularity.
           node scripts/reorder-search-index.mjs client/build/en-us/search-index.json client/build/de/search-index.json
@@ -392,6 +386,8 @@ jobs:
             --max-instances=1000 \
             --memory=2GB \
             --timeout=120s \
+            --run-service-account=run-prod-prod-functions@${{ secrets.GCP_PROJECT_NAME }}.iam.gserviceaccount.com \
+            --set-env-vars="IGNORED_ROUTES=" \
             --set-env-vars="ORIGIN_MAIN=developer.mozilla.org" \
             --set-env-vars="ORIGIN_LIVE_SAMPLES=live.mdnplay.dev" \
             --set-env-vars="ORIGIN_PLAY=mdnplay.dev" \
